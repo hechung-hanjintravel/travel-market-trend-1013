@@ -33,7 +33,6 @@
       body { background: white !important; color: black !important; }
       .print-card { break-inside: avoid; border: 1px solid #e2e8f0 !important; box-shadow: none !important; }
     }
-    /* Scrollbar customization */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -47,6 +46,10 @@
     }
     ::-webkit-scrollbar-thumb:hover {
       background: #94a3b8;
+    }
+    .dragover-active {
+      border-color: #2563eb !important;
+      background-color: #eff6ff !important;
     }
   </style>
 </head>
@@ -213,7 +216,7 @@
               1. 신문광고 동향
             </h2>
             <p class="text-xs text-slate-400">
-              주요 일간지(중앙일보 / 조선일보) 전면 광고 게재 현황 및 지면 파일 링크
+              주요 일간지(중앙일보 / 조선일보) 전면 광고 게재 현황 및 원본 파일 열람 링크
             </p>
           </div>
         </div>
@@ -230,7 +233,7 @@
               <th class="py-2.5 px-3.5 font-bold">매체 / 면</th>
               <th class="py-2.5 px-3.5 font-bold">여행사</th>
               <th class="py-2.5 px-3.5 font-bold">광고 타이틀 및 주요 상품 내용</th>
-              <th class="py-2.5 px-3.5 font-bold text-center">지면 파일 바로가기</th>
+              <th class="py-2.5 px-3.5 font-bold text-center">지면 파일 열람 / 업로드</th>
               <th class="py-2.5 px-3.5 font-bold text-right">포지셔닝</th>
             </tr>
           </thead>
@@ -372,12 +375,21 @@
 
   </main>
 
+  <!-- Hidden Global File Input for 100% Reliable Upload -->
+  <input 
+    type="file" 
+    id="global-file-picker" 
+    accept="image/*,application/pdf,.pdf" 
+    class="hidden" 
+    onchange="onGlobalFileSelected(event)" 
+  />
+
   <!-- Newspaper Ad Detail & File Viewer Modal -->
   <div id="file-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-3 sm:p-5 bg-slate-950/75 backdrop-blur-xs">
-    <div class="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh]">
+    <div class="relative w-full max-w-3xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92vh]">
       
       <!-- Modal Header -->
-      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850">
+      <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850">
         <div class="flex items-center gap-3">
           <div class="p-2 bg-blue-600 text-white rounded-xl shadow-xs">
             <i data-lucide="newspaper" class="w-5 h-5"></i>
@@ -403,38 +415,97 @@
       <!-- Modal Body -->
       <div class="p-5 overflow-y-auto space-y-4 text-left text-xs sm:text-sm">
         
-        <!-- File Info & Upload Box -->
-        <div class="p-3.5 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 flex items-center justify-between gap-3">
+        <!-- File Action & Status Card -->
+        <div class="p-3.5 rounded-xl bg-blue-50/90 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div class="flex items-center gap-2.5">
-            <i data-lucide="file-text" class="w-5 h-5 text-blue-600 shrink-0"></i>
+            <i data-lucide="file-check" class="w-5 h-5 text-blue-600 shrink-0"></i>
             <div>
-              <span class="text-[10px] text-blue-600 dark:text-blue-400 font-semibold block">매핑된 원본 지면 파일명</span>
+              <span class="text-[10px] text-blue-600 dark:text-blue-400 font-semibold block">매핑 파일명</span>
               <span id="modal-filename" class="font-mono text-xs font-bold text-slate-900 dark:text-slate-100">
                 1012월 중앙일보_롯데관광.jpg
               </span>
             </div>
           </div>
 
-          <label class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 text-blue-700 dark:text-blue-300 rounded-lg border border-blue-200 dark:border-blue-800 text-xs font-semibold shadow-xs transition shrink-0">
-            <i data-lucide="upload" class="w-3.5 h-3.5"></i>
-            <span>내 파일 열람</span>
-            <input type="file" id="modal-file-input" accept="image/*,.pdf" class="hidden" onchange="handleModalFileUpload(event)" />
-          </label>
+          <div class="flex items-center gap-2 shrink-0">
+            <!-- Upload Trigger Button -->
+            <button 
+              type="button"
+              onclick="triggerDirectUpload()" 
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-sm transition cursor-pointer active:scale-95"
+            >
+              <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+              <span>지면 파일 업로드</span>
+            </button>
+
+            <!-- Open in New Tab Button -->
+            <button 
+              type="button"
+              id="modal-open-newtab"
+              onclick="openFileInNewTab()"
+              class="hidden inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold transition cursor-pointer"
+            >
+              <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+              <span>새 창 열기</span>
+            </button>
+            
+            <!-- Remove Cached File Button -->
+            <button 
+              type="button"
+              id="modal-remove-file"
+              onclick="removeUploadedFile()"
+              class="hidden p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg border border-red-200 text-xs transition cursor-pointer"
+              title="업로드한 파일 지우기"
+            >
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
         </div>
 
-        <!-- Image preview container -->
-        <div id="modal-img-container" class="hidden rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 max-h-80 flex justify-center bg-slate-950 p-2">
-          <img id="modal-img-tag" src="" alt="지면 미리보기" class="max-h-72 object-contain rounded" />
+        <!-- Drag & Drop / Upload Trigger Area -->
+        <div 
+          id="modal-dropzone" 
+          ondragover="handleDragOver(event)" 
+          ondragleave="handleDragLeave(event)" 
+          ondrop="handleDrop(event)"
+          onclick="triggerDirectUpload()"
+          class="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 rounded-2xl p-6 text-center cursor-pointer transition bg-slate-50/60 dark:bg-slate-800/40"
+        >
+          <div class="mx-auto w-10 h-10 mb-2 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/60 dark:text-blue-300 flex items-center justify-center">
+            <i data-lucide="upload-cloud" class="w-5 h-5"></i>
+          </div>
+          <div class="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-200 mb-0.5">
+            이곳을 클릭하거나 이미지를 드래그하여 바로 확인하세요
+          </div>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400">
+            JPG, PNG 이미지 및 PDF 문서 지원 (업로드한 파일은 브라우저에 안전하게 자동 저장됩니다)
+          </p>
         </div>
 
-        <div id="modal-placeholder-box" class="p-3 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-dashed border-slate-300 dark:border-slate-700 text-center text-xs text-slate-500">
-          <span>💡 위 <strong>[내 파일 열람]</strong> 버튼을 누르면 다운로드된 지면 이미지(JPG/PDF)를 브라우저 안에서 즉시 띄워 비교할 수 있습니다.</span>
+        <!-- Image Viewer Container with Zoom -->
+        <div id="modal-img-container" class="hidden rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-950 p-2 relative flex flex-col items-center">
+          <div class="w-full flex items-center justify-between pb-2 px-2 text-[11px] text-slate-400 border-b border-slate-800 mb-2">
+            <span>지면 미리보기</span>
+            <div class="flex items-center gap-2">
+              <button onclick="zoomImage(0.1)" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-white rounded font-bold cursor-pointer">확대 +</button>
+              <button onclick="zoomImage(-0.1)" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-white rounded font-bold cursor-pointer">축소 -</button>
+              <button onclick="resetZoom()" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-white rounded font-medium cursor-pointer">원래 크기</button>
+            </div>
+          </div>
+          <div class="overflow-auto max-h-[500px] w-full flex justify-center p-2">
+            <img id="modal-img-tag" src="" alt="지면 미리보기" class="max-h-[480px] object-contain rounded transition-transform duration-150 origin-top" />
+          </div>
         </div>
 
-        <!-- Main Product Info -->
+        <!-- PDF Viewer Container -->
+        <div id="modal-pdf-container" class="hidden rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-900 h-[500px]">
+          <iframe id="modal-pdf-tag" src="" class="w-full h-full border-0"></iframe>
+        </div>
+
+        <!-- Main Product Info Box -->
         <div class="space-y-1.5">
-          <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">메인 프로모션 상품</span>
-          <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700">
+          <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">메인 프로모션 상품 요약</span>
+          <div class="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700">
             <div id="modal-main-product" class="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">
               포르투갈 완전 일주 9일 (4,190,000원부터)
             </div>
@@ -447,7 +518,10 @@
       </div>
 
       <!-- Modal Footer -->
-      <div class="flex items-center justify-end px-5 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850">
+      <div class="flex items-center justify-between px-5 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850">
+        <span class="text-[11px] text-slate-400">
+          💡 같은 폴더에 이미지 파일이 있으면 링크에서 자동 표시됩니다.
+        </span>
         <button onclick="closeModal()" class="px-4 py-2 bg-slate-900 hover:bg-black text-white dark:bg-slate-100 dark:hover:bg-white dark:text-slate-900 rounded-lg text-xs font-semibold transition cursor-pointer">
           닫기
         </button>
@@ -713,7 +787,48 @@
     let selectedAgency = 'ALL';
     let currentSearch = '';
     let currentModalAd = null;
-    let localUploadedImages = {};
+    let currentZoom = 1;
+    let dbInstance = null;
+
+    // Open/Create IndexedDB for persistent image storage across reloads
+    function initDatabase() {
+      return new Promise((resolve) => {
+        const req = indexedDB.open('TravelBriefingDB', 1);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains('files')) {
+            db.createObjectStore('files', { keyPath: 'id' });
+          }
+        };
+        req.onsuccess = (e) => {
+          dbInstance = e.target.result;
+          resolve(dbInstance);
+        };
+        req.onerror = () => resolve(null);
+      });
+    }
+
+    function saveFileToStorage(adId, fileData) {
+      if (!dbInstance) return;
+      const tx = dbInstance.transaction('files', 'readwrite');
+      tx.objectStore('files').put({ id: adId, ...fileData });
+    }
+
+    function getFileFromStorage(adId) {
+      return new Promise((resolve) => {
+        if (!dbInstance) return resolve(null);
+        const tx = dbInstance.transaction('files', 'readonly');
+        const req = tx.objectStore('files').get(adId);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => resolve(null);
+      });
+    }
+
+    function deleteFileFromStorage(adId) {
+      if (!dbInstance) return;
+      const tx = dbInstance.transaction('files', 'readwrite');
+      tx.objectStore('files').delete(adId);
+    }
 
     const agenciesList = ["ALL", "롯데관광", "하나투어", "모두투어", "노랑풍선", "참좋은여행", "여행이지"];
 
@@ -793,7 +908,7 @@
       });
     }
 
-    function renderContent() {
+    async function renderContent() {
       const q = currentSearch.toLowerCase();
 
       // 1. Newspaper ads
@@ -826,11 +941,11 @@
             <td class="py-3 px-3.5 text-center whitespace-nowrap">
               <button
                 onclick="openModal('${ad.id}')"
-                class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-[11px] font-bold transition shadow-xs cursor-pointer group"
-                title="지면 파일 열람 및 상세 보기"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-bold transition shadow-xs cursor-pointer group active:scale-95"
+                title="지면 파일 열람 및 업로드"
               >
-                <i data-lucide="image" class="w-3.5 h-3.5 text-blue-600 group-hover:scale-110 transition-transform"></i>
-                <span class="font-mono">${ad.fileName}</span>
+                <i data-lucide="file-image" class="w-3.5 h-3.5 text-blue-600 group-hover:scale-110 transition-transform"></i>
+                <span class="font-mono text-[11px]">${ad.fileName}</span>
                 <i data-lucide="eye" class="w-3 h-3 text-blue-400 ml-0.5"></i>
               </button>
             </td>
@@ -958,7 +1073,6 @@
       }
       document.getElementById('badge-edm-count').textContent = `총 ${filteredEdm.length}건`;
 
-      // Tab Section Visibility
       const secNews = document.getElementById('sec-newspaper');
       const secBiz = document.getElementById('sec-biztalk');
       const promoEdmCont = document.getElementById('promo-edm-container');
@@ -1003,10 +1117,7 @@
         secCharts.classList.add('hidden');
       }
 
-      // Re-trigger Lucide icon renderer
-      if (window.lucide) {
-        window.lucide.createIcons();
-      }
+      if (window.lucide) window.lucide.createIcons();
     }
 
     function renderHighlights() {
@@ -1025,7 +1136,6 @@
     }
 
     function renderCharts() {
-      // Activity counts
       const counts = { "롯데관광": 0, "참좋은여행": 0, "하나투어": 0, "노랑풍선": 0, "여행이지": 0, "모두투어": 0 };
       BRIEFING_DATA.newspaperAds.forEach(x => { if (counts[x.agency] !== undefined) counts[x.agency]++; });
       BRIEFING_DATA.bizTalkItems.forEach(x => { if (counts[x.agency] !== undefined) counts[x.agency]++; });
@@ -1054,7 +1164,6 @@
         `;
       }).join('');
 
-      // Donut Legend
       const legendContainer = document.getElementById('donut-legend');
       legendContainer.innerHTML = categoriesDistribution.map(cat => `
         <div class="flex items-center gap-2">
@@ -1065,10 +1174,13 @@
       `).join('');
     }
 
-    function openModal(adId) {
+    let currentActiveFileUrl = null;
+
+    async function openModal(adId) {
       const ad = BRIEFING_DATA.newspaperAds.find(x => x.id === adId);
       if (!ad) return;
       currentModalAd = ad;
+      currentZoom = 1;
 
       document.getElementById('modal-meta').textContent = `${ad.media} · ${ad.page}`;
       document.getElementById('modal-date').textContent = `게재일: ${ad.date}`;
@@ -1077,58 +1189,178 @@
       document.getElementById('modal-mainProduct').textContent = ad.mainProduct;
       document.getElementById('modal-details').textContent = ad.details;
 
-      const imgContainer = document.getElementById('modal-img-container');
-      const imgTag = document.getElementById('modal-img-tag');
-      const placeholder = document.getElementById('modal-placeholder-box');
-
-      if (localUploadedImages[ad.id]) {
-        imgTag.src = localUploadedImages[ad.id];
-        imgContainer.classList.remove('hidden');
-        placeholder.classList.add('hidden');
+      // Check if file already exists in persistent IndexedDB storage
+      const stored = await getFileFromStorage(ad.id);
+      if (stored && stored.dataUrl) {
+        displayFileContent(stored.dataUrl, stored.isPdf);
       } else {
-        imgContainer.classList.add('hidden');
-        placeholder.classList.remove('hidden');
+        // Attempt to auto-load file if located in same repository folder on GitHub
+        checkLocalRepoFile(ad.fileName);
       }
 
       document.getElementById('file-modal').classList.remove('hidden');
       if (window.lucide) window.lucide.createIcons();
     }
 
-    function closeModal() {
-      document.getElementById('file-modal').classList.add('hidden');
-      currentModalAd = null;
-    }
-
-    function handleModalFileUpload(event) {
-      const file = event.target.files && event.target.files[0];
-      if (file && currentModalAd) {
-        const previewUrl = URL.createObjectURL(file);
-        localUploadedImages[currentModalAd.id] = previewUrl;
-
-        const imgContainer = document.getElementById('modal-img-container');
-        const imgTag = document.getElementById('modal-img-tag');
-        const placeholder = document.getElementById('modal-placeholder-box');
-
-        imgTag.src = previewUrl;
-        imgContainer.classList.remove('hidden');
-        placeholder.classList.add('hidden');
+    function checkLocalRepoFile(fileName) {
+      const isPdf = fileName.toLowerCase().endsWith('.pdf');
+      const relativePath = `./${encodeURIComponent(fileName)}`;
+      
+      // Test if file exists in the directory
+      const testImg = new Image();
+      testImg.onload = () => {
+        displayFileContent(relativePath, false);
+      };
+      testImg.onerror = () => {
+        // If not found, show upload dropzone
+        hideAllViewers();
+      };
+      if (!isPdf) {
+        testImg.src = relativePath;
+      } else {
+        // For PDF, test fetch
+        fetch(relativePath, { method: 'HEAD' })
+          .then(res => {
+            if (res.ok) displayFileContent(relativePath, true);
+            else hideAllViewers();
+          })
+          .catch(() => hideAllViewers());
       }
     }
 
-    // Close modal on click outside
+    function hideAllViewers() {
+      currentActiveFileUrl = null;
+      document.getElementById('modal-dropzone').classList.remove('hidden');
+      document.getElementById('modal-img-container').classList.add('hidden');
+      document.getElementById('modal-pdf-container').classList.add('hidden');
+      document.getElementById('modal-open-newtab').classList.add('hidden');
+      document.getElementById('modal-remove-file').classList.add('hidden');
+    }
+
+    function displayFileContent(url, isPdf) {
+      currentActiveFileUrl = url;
+      document.getElementById('modal-dropzone').classList.add('hidden');
+      document.getElementById('modal-open-newtab').classList.remove('hidden');
+      document.getElementById('modal-remove-file').classList.remove('hidden');
+
+      if (isPdf) {
+        document.getElementById('modal-img-container').classList.add('hidden');
+        const pdfCont = document.getElementById('modal-pdf-container');
+        const pdfIframe = document.getElementById('modal-pdf-tag');
+        pdfIframe.src = url;
+        pdfCont.classList.remove('hidden');
+      } else {
+        document.getElementById('modal-pdf-container').classList.add('hidden');
+        const imgCont = document.getElementById('modal-img-container');
+        const imgTag = document.getElementById('modal-img-tag');
+        imgTag.src = url;
+        resetZoom();
+        imgCont.classList.remove('hidden');
+      }
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    // Trigger file input reliably
+    function triggerDirectUpload() {
+      const picker = document.getElementById('global-file-picker');
+      picker.value = ''; // Allow selecting same file repeatedly
+      picker.click();
+    }
+
+    function onGlobalFileSelected(event) {
+      const file = event.target.files && event.target.files[0];
+      if (file && currentModalAd) {
+        processUploadedFile(file);
+      }
+    }
+
+    function processUploadedFile(file) {
+      const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        const dataUrl = e.target.result;
+        // 1. Save to persistent storage
+        saveFileToStorage(currentModalAd.id, {
+          dataUrl: dataUrl,
+          isPdf: isPdf,
+          fileName: file.name
+        });
+
+        // 2. Render on screen immediately
+        displayFileContent(dataUrl, isPdf);
+      };
+
+      reader.readAsDataURL(file);
+    }
+
+    // Drag and drop handlers
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      document.getElementById('modal-dropzone').classList.add('dragover-active');
+    }
+
+    function handleDragLeave(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      document.getElementById('modal-dropzone').classList.remove('dragover-active');
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      document.getElementById('modal-dropzone').classList.remove('dragover-active');
+      const files = e.dataTransfer && e.dataTransfer.files;
+      if (files && files.length > 0 && currentModalAd) {
+        processUploadedFile(files[0]);
+      }
+    }
+
+    function removeUploadedFile() {
+      if (currentModalAd) {
+        deleteFileFromStorage(currentModalAd.id);
+        hideAllViewers();
+      }
+    }
+
+    function openFileInNewTab() {
+      if (currentActiveFileUrl) {
+        window.open(currentActiveFileUrl, '_blank');
+      }
+    }
+
+    function zoomImage(delta) {
+      currentZoom = Math.min(Math.max(currentZoom + delta, 0.5), 3.0);
+      const img = document.getElementById('modal-img-tag');
+      if (img) img.style.transform = `scale(${currentZoom})`;
+    }
+
+    function resetZoom() {
+      currentZoom = 1;
+      const img = document.getElementById('modal-img-tag');
+      if (img) img.style.transform = 'scale(1)';
+    }
+
+    function closeModal() {
+      document.getElementById('file-modal').classList.add('hidden');
+      const pdfIframe = document.getElementById('modal-pdf-tag');
+      if (pdfIframe) pdfIframe.src = '';
+      currentModalAd = null;
+    }
+
     document.getElementById('file-modal').addEventListener('click', function(e) {
       if (e.target === this) closeModal();
     });
 
-    // Initialize Dashboard
-    window.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('DOMContentLoaded', async () => {
+      await initDatabase();
       renderAgencyFilters();
       renderTabs();
       renderHighlights();
       renderCharts();
       renderContent();
 
-      // Search input handler
       document.getElementById('search-input').addEventListener('input', (e) => {
         currentSearch = e.target.value;
         renderContent();
